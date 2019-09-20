@@ -1,27 +1,37 @@
-# AngularTestDirective
+# Demonstrate issue with testing component with mocked structural directive
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.3.9.
+Following test is failing with a message:
 
-## Development server
+> Property binding appSome not used by any directive on an embedded template. Make sure that the property name is spelled correctly and all directives are listed in the "@NgModule.declarations". ("[ERROR ->]<h1 *appSome="true">TEST</h1>
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+I am mocking structural directive `SomeDirective` with `SomeMockDirective` defined within app.component.spec.ts. Test is failing.
 
-## Code scaffolding
+If I switch declarations so that it does contain `SomeDirective` instead the test passes. I im wondering why I can not make it working with mocked version.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+declarations: [AppComponent, SomeMockDirective],
 
-## Build
+```
+import { TestBed, async } from '@angular/core/testing';
+import { AppComponent } from './app.component';
+import { Directive, NO_ERRORS_SCHEMA } from '@angular/core';
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+@Directive({
+  selector: '[appSome]'
+})
+export class SomeMockDirective {}
 
-## Running unit tests
+describe('AppComponent', () => {
+  beforeEach(async(() => {
+    TestBed.configureTestingModule({
+      declarations: [AppComponent, SomeMockDirective], // test is failing, switch the directive to SomeDirective and it passes
+      schemas: [NO_ERRORS_SCHEMA]
+    }).compileComponents();
+  }));
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI README](https://github.com/angular/angular-cli/blob/master/README.md).
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.debugElement.componentInstance;
+    expect(app).toBeTruthy();
+  });
+});
+```
